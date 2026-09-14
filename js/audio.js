@@ -46,9 +46,14 @@ class SoundController {
     if (!this.speechSynthesis) return;
 
     const selectVoice = () => {
+      if (!this.speechSynthesis) return;
       const voices = this.speechSynthesis.getVoices();
-      // Search for Thai voice
-      this.thaiVoice = voices.find(v => v.lang.includes('th') || v.lang.includes('TH')) || null;
+      // Search for Thai voice with flexible lowercase check
+      this.thaiVoice = voices.find(v => {
+        const lang = (v.lang || '').toLowerCase();
+        const name = (v.name || '').toLowerCase();
+        return lang.includes('th') || lang.includes('thai') || name.includes('thai') || name.includes('thailand');
+      }) || null;
     };
 
     selectVoice();
@@ -338,13 +343,27 @@ class SoundController {
   // Thai Speech Synthesis (Web Speech API)
   // ==========================================
   speakThai(text, cancelPrevious = true) {
-    if (!this.speechEnabled || this.isMuted || !this.speechSynthesis) return;
+    if (!this.speechEnabled || this.isMuted) return;
+
+    if (!this.speechSynthesis) {
+      this.speechSynthesis = window.speechSynthesis || null;
+    }
+    if (!this.speechSynthesis) return;
 
     if (cancelPrevious) {
-      this.speechSynthesis.cancel();
+      try {
+        this.speechSynthesis.cancel();
+      } catch (e) {}
     }
 
-    // Try finding Thai voice again in case it was loaded late
+    // On iOS Safari / Chrome, unpause if suspended
+    try {
+      if (this.speechSynthesis.paused) {
+        this.speechSynthesis.resume();
+      }
+    } catch (e) {}
+
+    // Try finding Thai voice again in case voices loaded asynchronously
     if (!this.thaiVoice) {
       this.initVoices();
     }
@@ -358,7 +377,7 @@ class SoundController {
     }
 
     // Toddler-friendly warm and gentle voice tuning
-    utterance.rate = 0.88;   // Slightly slower and clearer
+    utterance.rate = 0.86;   // Slightly slower, clearest pronunciation for toddlers
     utterance.pitch = 1.15;  // Cheerful and friendly
     utterance.volume = 1.0;
 

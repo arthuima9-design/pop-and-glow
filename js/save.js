@@ -7,8 +7,10 @@ class SaveManager {
   constructor() {
     this.storageKey = 'pop_glow_profiles_v1';
     this.activeProfileKey = 'pop_glow_active_id_v1';
+    this.starsPerPopKey = 'pop_glow_stars_per_pop_v1';
     this.profiles = {};
     this.activeProfile = null;
+    this.starsPerPop = 10; // ค่าเริ่มต้นเพิ่มทีละ 10 ดาว
 
     this.init();
   }
@@ -45,6 +47,31 @@ class SaveManager {
       activeId = Object.keys(this.profiles)[0];
     }
     this.activeProfile = this.profiles[activeId];
+
+    // Restore starsPerPop
+    try {
+      const savedStars = localStorage.getItem(this.starsPerPopKey);
+      if (savedStars !== null) {
+        this.starsPerPop = parseInt(savedStars, 10) || 10;
+      } else {
+        this.starsPerPop = 10;
+      }
+    } catch (e) {
+      this.starsPerPop = 10;
+    }
+  }
+
+  getStarsPerPop() {
+    return this.starsPerPop || 10;
+  }
+
+  setStarsPerPop(amount) {
+    const val = parseInt(amount, 10);
+    this.starsPerPop = isNaN(val) || val < 1 ? 10 : Math.min(val, 9999);
+    try {
+      localStorage.setItem(this.starsPerPopKey, this.starsPerPop.toString());
+    } catch (e) {}
+    return this.starsPerPop;
   }
 
   saveToStorage() {

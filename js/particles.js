@@ -48,6 +48,28 @@ class ParticleSystem {
   }
 
   /**
+   * Spawn floating score banner (+10 ⭐) rising upwards
+   */
+  spawnScoreFloat(x, y, text = '+10 ⭐', color = '#F59E0B') {
+    this.particles.push({
+      x: x,
+      y: y,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: -2.6,
+      size: 30,
+      color: color,
+      alpha: 1.0,
+      decay: 0.016,
+      rotation: 0,
+      rotationSpeed: 0,
+      type: 'text',
+      text: text,
+      flipSpeed: 0,
+      flipAngle: 0
+    });
+  }
+
+  /**
    * Add an expanding ripple ring (for touches or mic blow)
    */
   addRipple(x, y, color = '#38BDF8', maxRadius = 100, lineWidth = 4) {
@@ -126,7 +148,16 @@ class ParticleSystem {
       ctx.globalAlpha = Math.max(0, p.alpha);
       ctx.fillStyle = p.color;
 
-      if (p.type === 'star') {
+      if (p.type === 'text') {
+        ctx.font = '900 32px "Kanit", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeText(p.text, 0, 0);
+        ctx.fillStyle = p.color;
+        ctx.fillText(p.text, 0, 0);
+      } else if (p.type === 'star') {
         this.drawStar(ctx, 0, 0, 5, p.size, p.size * 0.45);
       } else if (p.type === 'triangle') {
         this.drawTriangle(ctx, 0, 0, p.size);

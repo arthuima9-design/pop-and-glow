@@ -34,11 +34,11 @@ class Balloon {
     this.radius = options.radius || 60; // Toddler large size
     this.hitRadius = this.radius * 1.85; // 1.85x generous touch area
 
-    // Floating motion physics
+    // Floating motion physics (ลอยตรงแนวดิ่ง 100% ไม่ส่ายไปมา นิ่งสงบตามความต้องการ)
     this.vy = options.vy || -(Math.random() * 0.7 + 0.9);
-    this.swayAmplitude = Math.random() * 25 + 15;
-    this.swayFreq = Math.random() * 0.03 + 0.02;
-    this.swayPhase = Math.random() * Math.PI * 2;
+    this.swayAmplitude = 0;
+    this.swayFreq = 0;
+    this.swayPhase = 0;
     this.rotation = 0;
     this.wobbleAngle = 0;
 
@@ -153,10 +153,10 @@ class Balloon {
       return;
     }
 
-    // Motion physics
+    // Motion physics (ลอยตรงอย่างนิ่งสงบ ไม่ส่ายแกว่งซ้ายขวา)
     if (!this.isDragging) {
       this.y += this.vy;
-      this.x = this.baseX + Math.sin(time * this.swayFreq + this.swayPhase) * this.swayAmplitude;
+      this.x = this.baseX; // นิ่งสนิท ไม่มีส่ายแกว่งไปมา
 
       // Gradually restore upward velocity if boosted
       if (this.vy < -2.0) {
@@ -361,11 +361,7 @@ class Balloon {
 
     ctx.beginPath();
     ctx.moveTo(0, startY);
-    ctx.bezierCurveTo(
-      -12, startY + this.stringLength * 0.35,
-      14, startY + this.stringLength * 0.7,
-      0, startY + this.stringLength
-    );
+    ctx.lineTo(0, startY + this.stringLength);
     ctx.stroke();
     ctx.restore();
   }

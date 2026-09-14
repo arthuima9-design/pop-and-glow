@@ -91,6 +91,7 @@ class Game {
     this.setupHUDControls();
     this.setupSettingsUI();
     this.setupProfileUI();
+    this.setupLevelSelectorUI();
     this.updateProfileHUD();
 
     // Start in Level 1
@@ -147,19 +148,29 @@ class Game {
     this.hideCelebration();
     this.updateProgressHUD();
 
+    // Toggle Free Play Floating Dock Bar
+    const freePlayBar = document.getElementById('freePlayLevelBar');
+    if (freePlayBar) {
+      if (this.currentLevel === this.LEVELS.FREE_PLAY) {
+        freePlayBar.classList.remove('hidden');
+      } else {
+        freePlayBar.classList.add('hidden');
+      }
+    }
+
     if (this.currentLevel === this.LEVELS.COLOR_POP) {
-      this.levelBadge.textContent = '⭐ ด่าน 1: สีสัน';
+      if (this.levelBadge) this.levelBadge.textContent = '🎨 ด่าน 1: สีสัน ▾';
       this.pickNewTargetColor();
       this.spawnInitialBalloons(5);
     } else if (this.currentLevel === this.LEVELS.SHAPE_SHIFTER) {
-      this.levelBadge.textContent = '⭐ ด่าน 2: รูปทรง';
+      if (this.levelBadge) this.levelBadge.textContent = '🔺 ด่าน 2: รูปทรง ▾';
       this.pickNewTargetShape();
       this.spawnInitialBalloons(5);
     } else if (this.currentLevel === this.LEVELS.MATCH_SORT) {
-      this.levelBadge.textContent = '⭐ ด่าน 3: แยกหมวดหมู่';
+      if (this.levelBadge) this.levelBadge.textContent = '🎁 ด่าน 3: แยกหมวด ▾';
       this.initSortingLevel();
     } else if (this.currentLevel === this.LEVELS.FREE_PLAY) {
-      this.levelBadge.textContent = '🎈 ลานเล่นอิสระ';
+      if (this.levelBadge) this.levelBadge.textContent = '🎈 ลานเล่นอิสระ ▾';
       this.setPrompt('จิ้มลูกโป่งเล่นได้เลยจ้า! ✨', '#FF4757');
       this.spawnInitialBalloons(7);
       if (window.soundCtrl) {
@@ -625,12 +636,20 @@ class Game {
         }
       }
 
-      // Increment progress & save stars
+      // Increment progress & save stars (ปรับแต่งคะแนนได้ตามใจชอบ พร้อมเอฟเฟกต์ตัวเลขลอย)
       this.levelProgress++;
       this.updateProgressHUD();
+      const starsEarned = (window.saveManager && window.saveManager.getStarsPerPop) 
+        ? window.saveManager.getStarsPerPop() 
+        : 10;
       if (window.saveManager) {
-        window.saveManager.addStars(1);
+        window.saveManager.addStars(starsEarned);
         this.updateProfileHUD();
+      }
+
+      // แสดงตัวเลขคะแนนลอยขึ้นมา เช่น +10 ⭐
+      if (window.particleSystem && window.particleSystem.spawnScoreFloat) {
+        window.particleSystem.spawnScoreFloat(balloon.x, balloon.y - 25, `+${starsEarned} ⭐`, '#F59E0B');
       }
 
       // Check level advance
@@ -683,9 +702,18 @@ class Game {
 
         this.levelProgress++;
         this.updateProgressHUD();
+        const baseStars = (window.saveManager && window.saveManager.getStarsPerPop) 
+          ? window.saveManager.getStarsPerPop() 
+          : 10;
+        const sortStars = baseStars * 2;
         if (window.saveManager) {
-          window.saveManager.addStars(2);
+          window.saveManager.addStars(sortStars);
           this.updateProfileHUD();
+        }
+
+        // แสดงคะแนนลอยตัวหน้ากล่องวิเศษ
+        if (window.particleSystem && window.particleSystem.spawnScoreFloat) {
+          window.particleSystem.spawnScoreFloat(droppedInBox.x, droppedInBox.y - droppedInBox.height * 0.4, `+${sortStars} ⭐`, '#F59E0B');
         }
 
         if (this.levelProgress >= this.targetProgress) {
@@ -930,6 +958,101 @@ class Game {
         if (window.micController) window.micController.setSensitivity(parseInt(e.target.value, 10));
       });
     }
+
+    // Stars per pop customization (กำหนดคะแนนดาวต่อลูกโป่ง)
+    const currentRateBadge = document.getElementById('currentScoreRateBadge');
+    const inputCustomScore = document.getElementById('inputCustomScore');
+    const btnSaveCustomScore = document.getElementById('btnSaveCustomScore');
+    const presetBtns = document.querySelectorAll('[data-score-preset]');
+
+    const updateScoreUI = (scoreVal) => {
+      if (currentRateBadge) currentRateBadge.textContent = `+${scoreVal} ⭐ / ลูก`;
+      if (inputCustomScore) inputCustomScore.value = scoreVal;
+      presetBtns.forEach(btn => {
+        const pVal = parseInt(btn.getAttribute('data-score-preset'), 10);
+        if (pVal === scoreVal) {
+          btn.className = 'score-preset-btn py-1.5 bg-amber-400 text-white font-extrabold rounded-xl text-xs shadow active:scale-95 transition-all ring-2 ring-amber-300';
+        } else {
+          btn.className = 'score-preset-btn py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-bold text-amber-800 hover:bg-amber-100 active:scale-95 transition-all';
+        }
+      });
+    };
+
+    if (window.saveManager) {
+      updateScoreUI(window.saveManager.getStarsPerPop());
+    }
+
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const val = parseInt(e.currentTarget.getAttribute('data-score-preset'), 10);
+        if (window.saveManager) {
+          window.saveManager.setStarsPerPop(val);
+          updateScoreUI(val);
+          if (window.soundCtrl) window.soundCtrl.playSparkle();
+        }
+      });
+    });
+
+    if (btnSaveCustomScore && inputCustomScore) {
+      btnSaveCustomScore.addEventListener('click', () => {
+        const val = parseInt(inputCustomScore.value, 10);
+        if (window.saveManager && !isNaN(val) && val > 0) {
+          const finalVal = window.saveManager.setStarsPerPop(val);
+          updateScoreUI(finalVal);
+          if (window.soundCtrl) window.soundCtrl.playSparkle();
+          alert(`ตั้งค่าคะแนนเรียบร้อยแล้ว: +${finalVal} ⭐ ต่อ 1 ลูกโป่ง`);
+        }
+      });
+    }
+  }
+
+  // ==========================================
+  // Level Selector Modal & Free Play Dock
+  // ==========================================
+  setupLevelSelectorUI() {
+    const btnLevelSelector = document.getElementById('btnLevelSelector');
+    const levelModal = document.getElementById('levelModal');
+    const btnCloseLevelModal = document.getElementById('btnCloseLevelModal');
+    const btnCelebrationChooseLevel = document.getElementById('btnCelebrationChooseLevel');
+
+    const openLevelModal = () => {
+      if (levelModal) levelModal.classList.add('open');
+    };
+    const closeLevelModal = () => {
+      if (levelModal) levelModal.classList.remove('open');
+    };
+
+    if (btnLevelSelector) {
+      btnLevelSelector.addEventListener('click', () => openLevelModal());
+    }
+    if (btnCloseLevelModal) {
+      btnCloseLevelModal.addEventListener('click', () => closeLevelModal());
+    }
+    if (btnCelebrationChooseLevel) {
+      btnCelebrationChooseLevel.addEventListener('click', () => {
+        this.hideCelebration();
+        openLevelModal();
+      });
+    }
+
+    // Modal Level Select buttons
+    document.querySelectorAll('[data-select-level]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const lvl = parseInt(e.currentTarget.getAttribute('data-select-level'), 10);
+        this.startLevel(lvl);
+        closeLevelModal();
+        if (window.soundCtrl) window.soundCtrl.playSparkle();
+      });
+    });
+
+    // Free Play dock quick buttons
+    document.querySelectorAll('[data-quick-level]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const lvl = parseInt(e.currentTarget.getAttribute('data-quick-level'), 10);
+        this.startLevel(lvl);
+        if (window.soundCtrl) window.soundCtrl.playSparkle();
+      });
+    });
   }
 
   // ==========================================

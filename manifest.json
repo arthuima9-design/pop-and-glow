@@ -1,0 +1,17 @@
+{
+  "name": "Pop & Glow: Shapes & Colors (ลูกโป่งแปลงร่าง เสริมพัฒนาการ)",
+  "short_name": "Pop & Glow",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#BAE6FD",
+  "theme_color": "#BAE6FD",
+  "description": "เกมลูกโป่งแปลงร่าง เสริมพัฒนาการเด็ก 2 ขวบ เล่นได้บน iPad, มือถือ และคอมพิวเตอร์",
+  "icons": [
+    {
+      "src": "assets/mascot_star.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#BAE6FD">
+  <title>Pop & Glow: Shapes & Colors (ลูกโป่งแปลงร่าง เสริมพัฒนาการเด็ก 2 ขวบ)</title>
+
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/jpeg" href="assets/mascot_star.jpg">
+  <link rel="apple-touch-icon" href="assets/mascot_star.jpg">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Game Styling with Cache Busting -->
+  <link rel="stylesheet" href="css/game.css?v=1.2.0">
+</head>
+<body class="select-none touch-none">
+
+  <!-- Background Animated Clouds Layer -->
+  <div class="cloud-layer" aria-hidden="true">
+    <div class="cloud" style="width: 260px; height: 90px; top: 12%; animation-duration: 38s; animation-delay: 0s;"></div>
+    <div class="cloud" style="width: 320px; height: 110px; top: 28%; animation-duration: 45s; animation-delay: -18s;"></div>
+    <div class="cloud" style="width: 220px; height: 80px; top: 55%; animation-duration: 32s; animation-delay: -10s;"></div>
+    <div class="cloud" style="width: 380px; height: 130px; top: 75%; animation-duration: 50s; animation-delay: -25s;"></div>
+  </div>
+
+  <!-- Screen Edge Guidance Halo -->
+  <div id="screenHalo"></div>
+
+  <!-- Main 60fps Game Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Floating Top HUD Controls -->
+  <header class="hud-container">
+    <!-- Left: Level Badge & Player Profile & Progress -->
+    <div class="flex items-center gap-2 sm:gap-3 hud-interactive">
+      <div class="hud-pill px-2.5 sm:px-4 py-1.5 flex items-center gap-2">
+        <img src="assets/mascot_star.jpg" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-amber-300 object-cover shadow-sm" alt="น้องดาวมาสคอต" />
+        <span id="levelBadge" class="font-bold text-slate-800 text-xs sm:text-base">ด่าน 1: สีสัน</span>
+      </div>
+
+      <!-- Player Profile & Star Count ("เซฟใครเซฟมัน") -->
+      <div id="playerProfilePill" class="hud-pill px-3 py-1.5 flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95 transition-transform" title="โปรไฟล์ผู้เล่น (แตะเพื่อดูเซฟ)">
+        <span id="playerAvatar" class="text-sm sm:text-base">⭐</span>
+        <span id="playerName" class="font-bold text-slate-800 text-xs sm:text-sm hidden sm:inline">น้องคนเก่ง</span>
+        <span id="playerStars" class="text-xs bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded-full">⭐ 0</span>
+      </div>
+
+      <div id="progressDots" class="hud-pill px-2.5 sm:px-3 py-2 flex items-center gap-1.5 hidden md:flex">
+        <!-- Progress dots inserted by JS -->
+      </div>
+    </div>
+
+    <!-- Center: Visual Mission Preview Card (ออกแบบสำหรับเด็ก 2 ขวบที่ยังอ่านไม่ออก) -->
+    <div class="hud-interactive">
+      <div id="promptBanner" class="hud-pill cursor-pointer shadow-xl flex items-center gap-2.5 sm:gap-3 px-3 sm:px-5 py-2 hover:scale-105 active:scale-95 transition-transform" title="แตะเพื่อฟังเสียงอีกครั้ง">
+        <!-- Big Animated Visual Icon Preview -->
+        <div id="targetVisualPreview" class="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/90 shadow-inner border-2 border-amber-300 overflow-hidden flex-shrink-0">
+          <canvas id="previewCanvas" width="56" height="56"></canvas>
+          <div class="pointer-hand-badge absolute -bottom-1 -right-1 text-sm sm:text-base animate-bounce select-none">👆</div>
+        </div>
+
+        <!-- Visual Instruction / Text for parents & speech cues -->
+        <div class="flex flex-col text-left justify-center">
+          <span class="text-[10px] sm:text-xs text-slate-500 font-bold leading-tight">เป้าหมาย (แตะตามรูปนี้):</span>
+          <span id="promptText" class="font-extrabold text-slate-800 text-base sm:text-2xl leading-none drop-shadow-sm">จิ้มสีแดง!</span>
+        </div>
+
+        <!-- Speaker button -->
+        <button id="btnReplayVoice" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center shadow transition-transform active:scale-90 ml-1 flex-shrink-0" aria-label="ฟังเสียงอีกครั้ง">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Sensory Controls & Parental Gate -->
+    <div class="flex items-center gap-2.5 hud-interactive">
+      <!-- Camera Gesture Toggle -->
+      <button id="btnCameraToggle" class="toddler-btn" title="เปิด/ปิด กล้องตรวจจับการโบกมือ" aria-label="กล้องตรวจจับมือ">
+        <svg class="w-7 h-7 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </button>
+
+      <!-- Microphone Blow Toggle -->
+      <button id="btnMicToggle" class="toddler-btn" title="เปิด/ปิด ไมโครโฟนตรวจจับเสียงเป่าลม" aria-label="ไมค์เป่าลม">
+        <svg class="w-7 h-7 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+        </svg>
+      </button>
+
+      <!-- Fullscreen Toggle -->
+      <button id="btnFullscreen" class="toddler-btn hidden sm:flex" title="เต็มหน้าจอ" aria-label="เต็มหน้าจอ" onclick="toggleFullscreen()">
+        <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+        </svg>
+      </button>
+
+      <!-- Parental Gate Button (Hold 3s) -->
+      <div id="parentalGateBtn" class="parental-gate-btn" title="สำหรับผู้ปกครอง: กดค้างไว้ 3 วินาที">
+        <svg class="meter-circle" viewBox="0 0 66 66">
+          <circle id="parentalGateMeter" class="meter-bar" cx="33" cy="33" r="30"></circle>
+        </svg>
+        <svg class="w-7 h-7 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- Camera Picture-in-Picture Floating Window -->
+  <div id="webcamContainer">
+    <video id="webcamVideo" autoplay playsinline muted></video>
+  </div>
+
+  <!-- Microphone Volume / Blow Visualizer -->
+  <div id="micVisualizer">
+    <span class="text-xs font-bold text-sky-600">เป่าลม / ร้องเสียงดัง 🌬️</span>
+    <div class="mic-bar"></div>
+    <div class="mic-bar"></div>
+    <div class="mic-bar"></div>
+    <div class="mic-bar"></div>
+  </div>
+
+  <!-- Celebration Fullscreen Overlay -->
+  <div id="celebrationOverlay">
+    <div class="star-trophy relative mb-3">
+      <img src="assets/mascot_star.jpg" alt="น้องดาวนำโชค" class="w-40 h-40 sm:w-52 sm:h-52 rounded-full object-cover shadow-2xl border-4 border-amber-300 ring-8 ring-amber-100/60" />
+      <div class="absolute -bottom-2 -right-2 text-4xl sm:text-5xl drop-shadow-md">🏆</div>
+    </div>
+    <h2 id="celebrationTitle" class="text-3xl sm:text-5xl font-black text-amber-500 drop-shadow-lg text-center px-4 mb-3">
+      🎉 ผ่านด่านแล้วจ้า! 🎉
+    </h2>
+    <p id="celebrationMsg" class="text-xl sm:text-2xl font-bold text-slate-700 text-center px-4 mb-6">
+      หนูเก่งที่สุดเลย ยอดเยี่ยมมาก!
+    </p>
+    <button id="btnCelebrationNext" class="px-8 py-4 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white font-extrabold text-2xl rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all">
+      ไปด่านต่อไปกันเถอะ! ⭐
+    </button>
+  </div>
+
+  <!-- Parental Gate Settings Modal -->
+  <div id="parentalModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="flex items-center justify-between border-b pb-4 mb-5">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚙️</span>
+          <h3 class="text-xl font-bold text-slate-800">การตั้งค่าสำหรับผู้ปกครอง</h3>
+        </div>
+        <button id="btnCloseParentalModal" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-lg">✕</button>
+      </div>
+
+      <!-- Quick Level Selector -->
+      <div class="mb-6">
+        <label class="block text-sm font-bold text-slate-600 mb-2">เลือกด่านให้เด็กเล่น:</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button data-set-level="1" class="p-3 bg-rose-50 hover:bg-rose-100 border-2 border-rose-300 rounded-2xl text-left transition-colors">
+            <span class="block font-bold text-rose-700">🎨 ด่าน 1: สีสัน</span>
+            <span class="text-xs text-slate-500">จดจำแม่สี 4 สีหลัก</span>
+          </button>
+          <button data-set-level="2" class="p-3 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-left transition-colors">
+            <span class="block font-bold text-amber-700">🔺 ด่าน 2: รูปทรง</span>
+            <span class="text-xs text-slate-500">วงกลม สี่เหลี่ยม สามเหลี่ยม ดาว</span>
+          </button>
+          <button data-set-level="3" class="p-3 bg-sky-50 hover:bg-sky-100 border-2 border-sky-300 rounded-2xl text-left transition-colors">
+            <span class="block font-bold text-sky-700">🎁 ด่าน 3: แยกหมวด</span>
+            <span class="text-xs text-slate-500">จับคู่รูปทรงลงกล่องวิเศษ</span>
+          </button>
+          <button data-set-level="4" class="p-3 bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-300 rounded-2xl text-left transition-colors">
+            <span class="block font-bold text-emerald-700">🎈 ลานเล่นอิสระ</span>
+            <span class="text-xs text-slate-500">จิ้มลูกโป่งเล่นไม่มีจำกัด</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Audio Toggles -->
+      <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 text-sm">🔊 เสียงเอฟเฟกต์ (SFX)</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleSfx" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 text-sm">🎵 ดนตรีคลอเบาๆ (BGM)</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleBgm" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-700 text-sm">🗣️ เสียงพากย์ภาษาไทย</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="toggleVoice" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <!-- Mic Sensitivity -->
+        <div class="pt-2 border-t border-slate-200">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-slate-700 text-sm">ความไวไมโครโฟนตรวจจับลมเป่า:</span>
+          </div>
+          <input type="range" id="micSensitivity" min="1" max="100" value="55" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-500">
+        </div>
+      </div>
+
+      <!-- Player Profiles & Save System ("เซฟใครเซฟมัน") -->
+      <div class="mb-6 bg-amber-50 p-4 rounded-2xl border border-amber-200">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-bold text-amber-900 text-sm flex items-center gap-1.5">
+            👤 โปรไฟล์และระบบเซฟ (เซฟใครเซฟมัน):
+          </span>
+          <span id="activeProfileStarsBadge" class="text-xs bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full">⭐ 0 ดวง</span>
+        </div>
+
+        <!-- Current Profile Display & Switcher -->
+        <div class="flex items-center gap-2 mb-3">
+          <select id="profileSelect" class="flex-1 bg-white border-2 border-amber-300 rounded-xl px-3 py-2 font-bold text-slate-700 text-sm outline-none focus:ring-2 focus:ring-amber-400">
+            <!-- Options populated by JS -->
+          </select>
+          <button id="btnNewProfile" class="px-3 py-2 bg-amber-400 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow transition-transform active:scale-95 whitespace-nowrap">
+            + เพิ่มเด็ก
+          </button>
+        </div>
+
+        <!-- Cross-Device Save Sync Code (ย้ายเซฟข้ามเครื่อง) -->
+        <div class="pt-2 border-t border-amber-200/80">
+          <span class="block text-xs font-bold text-amber-800 mb-1.5">📲 ย้ายเซฟไปเล่นเครื่องอื่น (iPad / มือถือ / คอม):</span>
+          <div class="flex gap-2">
+            <button id="btnCopySaveCode" class="flex-1 px-3 py-2 bg-white hover:bg-amber-100 border border-amber-300 rounded-xl text-xs font-bold text-amber-800 transition-colors shadow-sm">
+              📋 คัดลอกรหัสเซฟ
+            </button>
+            <button id="btnImportSaveCode" class="flex-1 px-3 py-2 bg-white hover:bg-amber-100 border border-amber-300 rounded-xl text-xs font-bold text-amber-800 transition-colors shadow-sm">
+              📥 ใส่รหัสเซฟเล่นต่อ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Child Ergonomics Info Note -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 text-xs text-slate-600 leading-relaxed">
+        <p class="font-bold text-blue-800 mb-1">💡 ปลอดภัยสำหรับเด็ก 2 ขวบ:</p>
+        <p>• ไม่มีบทลงโทษ ไม่มีการแพ้ (Zero Negative Feedback) เพื่อสร้างความมั่นใจและการเรียนรู้เชิงบวก</p>
+        <p>• ขอบเขตสัมผัสกว้างพิเศษ 1.85 เท่า ช่วยให้เด็กเล็กที่กำลังพัฒนากล้ามเนื้อมัดเล็กแตะโดนได้ง่าย</p>
+        <p>• ป้องกันการซูมและเลื่อนหน้าจอโดยไม่ตั้งใจ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Helper Script -->
+  <script>
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+  </script>
+
+  <!-- Game Modules with Version Cache-Busting (?v=1.2.0) -->
+  <script src="js/audio.js?v=1.2.0"></script>
+  <script src="js/particles.js?v=1.2.0"></script>
+  <script src="js/balloon.js?v=1.2.0"></script>
+  <script src="js/box.js?v=1.2.0"></script>
+  <script src="js/vision.js?v=1.2.0"></script>
+  <script src="js/mic.js?v=1.2.0"></script>
+  <script src="js/save.js?v=1.2.0"></script>
+  <script src="js/game.js?v=1.2.0"></script>
+
+</body>
+</html>

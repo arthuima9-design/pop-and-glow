@@ -1,0 +1,344 @@
+/* ==========================================================================
+   Pop & Glow: Shapes & Colors - Custom Stylesheet
+   ออกแบบสำหรับการยศาสตร์เด็ก 2 ขวบ (Child Ergonomics & Toddler Safety)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Prompt:wght@400;600;700&display=swap');
+
+:root {
+  --primary-red: #FF4757;
+  --primary-yellow: #FFA502;
+  --primary-blue: #2E86DE;
+  --primary-green: #2ED573;
+  --pastel-sky-top: #E0F2FE;
+  --pastel-sky-bottom: #F0FDF4;
+  --hud-bg: rgba(255, 255, 255, 0.85);
+  --hud-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Toddler protection: disable zooming, selection, gestures */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  font-family: 'Kanit', 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: url('../assets/sky_bg.jpg') center center / cover no-repeat,
+              linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 45%, #FEF9C3 100%);
+}
+
+/* Canvas fills the screen smoothly */
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 10;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* Animated soft clouds in the background */
+.cloud-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  filter: blur(8px);
+  animation: floatCloud linear infinite;
+}
+
+@keyframes floatCloud {
+  from { transform: translateX(-300px); }
+  to { transform: translateX(calc(100vw + 300px)); }
+}
+
+/* Target color halo on screen edges */
+#screenHalo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  border-radius: 0;
+  transition: box-shadow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 0 60px rgba(255, 255, 255, 0);
+}
+
+.halo-pulse {
+  animation: pulseHalo 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes pulseHalo {
+  0% { opacity: 0.5; filter: drop-shadow(0 0 10px currentColor); }
+  100% { opacity: 1; filter: drop-shadow(0 0 35px currentColor); }
+}
+
+/* Floating HUD Controls */
+.hud-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.hud-interactive {
+  pointer-events: auto;
+}
+
+.hud-pill {
+  background: var(--hud-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  box-shadow: var(--hud-shadow);
+}
+
+/* Speech Prompt Banner */
+#promptBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  color: #1E293B;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: bounceGentle 3s ease-in-out infinite;
+}
+
+@keyframes bounceGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Big toddler-friendly circular buttons */
+.toddler-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 3px solid #E2E8F0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  touch-action: manipulation;
+}
+
+.toddler-btn:active {
+  transform: scale(0.92);
+}
+
+/* Parental Gate Button with 3-second hold circular SVG indicator */
+.parental-gate-btn {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  border: 3px solid #E2E8F0;
+  transition: transform 0.15s ease;
+}
+
+.parental-gate-btn svg.meter-circle {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 66px;
+  height: 66px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.parental-gate-btn circle.meter-bar {
+  stroke: #FF4757;
+  stroke-width: 6;
+  stroke-dasharray: 188.5; /* 2 * PI * 30 */
+  stroke-dashoffset: 188.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+  fill: transparent;
+}
+
+.parental-gate-btn.holding {
+  transform: scale(1.08);
+  box-shadow: 0 0 25px rgba(255, 71, 87, 0.5);
+}
+
+/* Webcam PiP (Picture in Picture) preview */
+#webcamContainer {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 140px;
+  height: 105px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 3px solid white;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  background: #000;
+  z-index: 35;
+  display: none;
+  transform: scaleX(-1); /* Mirror camera */
+}
+
+#webcamVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Microphone blowing visual indicator */
+#micVisualizer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--hud-shadow);
+  border: 3px solid #38BDF8;
+  z-index: 30;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#micVisualizer.active {
+  opacity: 1;
+}
+
+.mic-bar {
+  width: 6px;
+  height: 16px;
+  background: #38BDF8;
+  border-radius: 3px;
+  transition: height 0.08s ease;
+}
+
+/* Modals (Parental Gate & Celebration) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 16px;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 32px;
+  padding: 28px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-backdrop.open .modal-card {
+  transform: scale(1);
+}
+
+/* Celebration Overlay */
+#celebrationOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+#celebrationOverlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.star-trophy {
+  animation: floatTrophy 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes floatTrophy {
+  0% { transform: scale(1) translateY(0) rotate(-3deg); }
+  100% { transform: scale(1.1) translateY(-15px) rotate(3deg); }
+}
+
+/* Glowing star wand cursor for camera gestures */
+.magic-wand-glow {
+  position: absolute;
+  pointer-events: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(254,240,138,0.8) 50%, rgba(250,204,21,0) 80%);
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 15px #FACC15);
+  z-index: 25;
+  transition: width 0.1s ease, height 0.1s ease;
+}

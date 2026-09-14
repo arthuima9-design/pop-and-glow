@@ -1,6 +1,9 @@
 # Pop & Glow: Shapes & Colors
 *(เกมลูกโป่งแปลงร่าง เสริมพัฒนาการเด็ก 2 ขวบ)*
 
+> 🎮 **ลิงก์สำหรับเข้าเล่นเกมออนไลน์ได้ทันที:**  
+> ### **👉 [https://arthuima9-design.github.io/pop-and-glow/](https://arthuima9-design.github.io/pop-and-glow/)**
+
 เว็บเกมพัฒนาทักษะสำหรับเด็กปฐมวัย รองรับทั้ง iPad, แท็บเล็ต, สมาร์ตโฟน (iOS/Android) และคอมพิวเตอร์ ทำงานผ่านหน้าเว็บแบบ Responsive 100%
 
 ---

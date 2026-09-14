@@ -36,7 +36,9 @@ class Game {
 
     this.currentLevel = this.LEVELS.COLOR_POP;
     this.levelProgress = 0;
-    this.targetProgress = 3; // 3 pops to complete level
+    this.targetProgress = (window.saveManager && window.saveManager.getTargetPops)
+      ? window.saveManager.getTargetPops()
+      : 5; // กำหนดเองได้ผ่านเมนูผู้ปกครอง
 
     // Target Criteria
     this.targetColor = 'red';
@@ -140,6 +142,9 @@ class Game {
   startLevel(levelNum) {
     this.currentLevel = levelNum;
     this.levelProgress = 0;
+    this.targetProgress = (window.saveManager && window.saveManager.getTargetPops)
+      ? window.saveManager.getTargetPops()
+      : 5;
     this.balloons = [];
     this.boxes = [];
     this.lastInteractTime = Date.now();
@@ -187,12 +192,25 @@ class Game {
       return;
     }
 
-    for (let i = 0; i < this.targetProgress; i++) {
-      const dot = document.createElement('div');
-      dot.className = `w-4 h-4 rounded-full transition-all duration-300 ${
-        i < this.levelProgress ? 'bg-amber-400 scale-125 shadow-md' : 'bg-slate-300'
-      }`;
-      this.progressDots.appendChild(dot);
+    if (this.targetProgress <= 6) {
+      for (let i = 0; i < this.targetProgress; i++) {
+        const dot = document.createElement('div');
+        dot.className = `w-4 h-4 rounded-full transition-all duration-300 ${
+          i < this.levelProgress ? 'bg-amber-400 scale-125 shadow-md' : 'bg-slate-300'
+        }`;
+        this.progressDots.appendChild(dot);
+      }
+    } else {
+      // Sleek progress bar + text for larger targets (e.g. 10, 15, 20)
+      const percent = Math.min(100, Math.round((this.levelProgress / this.targetProgress) * 100));
+      this.progressDots.innerHTML = `
+        <div class="flex items-center gap-2 px-1">
+          <div class="w-16 sm:w-20 h-3 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+            <div class="h-full bg-amber-400 rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+          </div>
+          <span class="text-xs font-black text-slate-700 whitespace-nowrap">${this.levelProgress}/${this.targetProgress} 🎈</span>
+        </div>
+      `;
     }
   }
 
@@ -1001,6 +1019,54 @@ class Game {
           updateScoreUI(finalVal);
           if (window.soundCtrl) window.soundCtrl.playSparkle();
           alert(`ตั้งค่าคะแนนเรียบร้อยแล้ว: +${finalVal} ⭐ ต่อ 1 ลูกโป่ง`);
+        }
+      });
+    }
+
+    // Target pops to win customization (จำนวนลูกโป่งเพื่อชนะผ่านด่าน)
+    const currentTargetPopsBadge = document.getElementById('currentTargetPopsBadge');
+    const inputCustomTargetPops = document.getElementById('inputCustomTargetPops');
+    const btnSaveCustomTargetPops = document.getElementById('btnSaveCustomTargetPops');
+    const targetPresetBtns = document.querySelectorAll('[data-target-preset]');
+
+    const updateTargetPopsUI = (targetVal) => {
+      if (currentTargetPopsBadge) currentTargetPopsBadge.textContent = `${targetVal} ลูก / ด่าน`;
+      if (inputCustomTargetPops) inputCustomTargetPops.value = targetVal;
+      targetPresetBtns.forEach(btn => {
+        const pVal = parseInt(btn.getAttribute('data-target-preset'), 10);
+        if (pVal === targetVal) {
+          btn.className = 'target-preset-btn py-1.5 bg-sky-500 text-white font-extrabold rounded-xl text-xs shadow active:scale-95 transition-all ring-2 ring-sky-300';
+        } else {
+          btn.className = 'target-preset-btn py-1.5 bg-white border border-sky-300 rounded-xl text-xs font-bold text-sky-800 hover:bg-sky-100 active:scale-95 transition-all';
+        }
+      });
+      this.targetProgress = targetVal;
+      this.updateProgressHUD();
+    };
+
+    if (window.saveManager) {
+      updateTargetPopsUI(window.saveManager.getTargetPops());
+    }
+
+    targetPresetBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const val = parseInt(e.currentTarget.getAttribute('data-target-preset'), 10);
+        if (window.saveManager) {
+          window.saveManager.setTargetPops(val);
+          updateTargetPopsUI(val);
+          if (window.soundCtrl) window.soundCtrl.playSparkle();
+        }
+      });
+    });
+
+    if (btnSaveCustomTargetPops && inputCustomTargetPops) {
+      btnSaveCustomTargetPops.addEventListener('click', () => {
+        const val = parseInt(inputCustomTargetPops.value, 10);
+        if (window.saveManager && !isNaN(val) && val > 0) {
+          const finalVal = window.saveManager.setTargetPops(val);
+          updateTargetPopsUI(finalVal);
+          if (window.soundCtrl) window.soundCtrl.playSparkle();
+          alert(`ตั้งค่าเป้าหมายเรียบร้อยแล้ว: จิ้ม ${finalVal} ลูกเพื่อผ่านด่าน 🎯`);
         }
       });
     }

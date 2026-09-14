@@ -8,9 +8,11 @@ class SaveManager {
     this.storageKey = 'pop_glow_profiles_v1';
     this.activeProfileKey = 'pop_glow_active_id_v1';
     this.starsPerPopKey = 'pop_glow_stars_per_pop_v1';
+    this.targetPopsKey = 'pop_glow_target_pops_v1';
     this.profiles = {};
     this.activeProfile = null;
     this.starsPerPop = 10; // ค่าเริ่มต้นเพิ่มทีละ 10 ดาว
+    this.targetPops = 5; // ค่าเริ่มต้นจิ้ม 5 ลูกผ่านด่าน (ปรับแต่งได้ตามใจชอบ)
 
     this.init();
   }
@@ -59,6 +61,18 @@ class SaveManager {
     } catch (e) {
       this.starsPerPop = 10;
     }
+
+    // Restore targetPops
+    try {
+      const savedTarget = localStorage.getItem(this.targetPopsKey);
+      if (savedTarget !== null) {
+        this.targetPops = parseInt(savedTarget, 10) || 5;
+      } else {
+        this.targetPops = 5;
+      }
+    } catch (e) {
+      this.targetPops = 5;
+    }
   }
 
   getStarsPerPop() {
@@ -72,6 +86,19 @@ class SaveManager {
       localStorage.setItem(this.starsPerPopKey, this.starsPerPop.toString());
     } catch (e) {}
     return this.starsPerPop;
+  }
+
+  getTargetPops() {
+    return this.targetPops || 5;
+  }
+
+  setTargetPops(amount) {
+    const val = parseInt(amount, 10);
+    this.targetPops = isNaN(val) || val < 1 ? 5 : Math.min(val, 999);
+    try {
+      localStorage.setItem(this.targetPopsKey, this.targetPops.toString());
+    } catch (e) {}
+    return this.targetPops;
   }
 
   saveToStorage() {

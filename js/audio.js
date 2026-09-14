@@ -15,8 +15,19 @@ class SoundController {
     this.bgmStep = 0;
     this.speechSynthesis = window.speechSynthesis || null;
     this.thaiVoice = null;
+    this.audioCache = new Map();
+    this.voiceAudio = null;
+    this.audioUnlocked = false;
 
     this.initVoices();
+  }
+
+  unlockAudio() {
+    this.initContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+    this.audioUnlocked = true;
   }
 
   initContext() {
@@ -340,9 +351,84 @@ class SoundController {
   }
 
   // ==========================================
-  // Thai Speech Synthesis (Web Speech API)
+  // Real Human Thai Voice Narration (MP3 Audio)
+  // 100% Cross-platform compatible (PC, Mac, iPad, iPhone, Android)
+  // ==========================================
+  playVoice(key, fallbackText = '') {
+    if (!this.speechEnabled || this.isMuted) return;
+
+    // Stop currently playing voice
+    if (this.voiceAudio) {
+      try {
+        this.voiceAudio.pause();
+        this.voiceAudio.currentTime = 0;
+      } catch (e) {}
+    }
+    if (this.speechSynthesis) {
+      try { this.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    let audio = this.audioCache.get(key);
+    if (!audio) {
+      audio = new Audio(`assets/audio/${key}.mp3`);
+      audio.preload = 'auto';
+      this.audioCache.set(key, audio);
+    }
+
+    this.voiceAudio = audio;
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn(`Voice MP3 play blocked or failed (${key}), falling back:`, err);
+        if (fallbackText) {
+          this.rawSpeakThai(fallbackText);
+        }
+      });
+    }
+  }
+
+  playVoiceRandom(keys, fallbackText = '') {
+    if (!keys || keys.length === 0) return;
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    this.playVoice(key, fallbackText);
+  }
+
+  // ==========================================
+  // Intelligent Thai Speech Router
   // ==========================================
   speakThai(text, cancelPrevious = true) {
+    if (!this.speechEnabled || this.isMuted) return;
+
+    // Intelligent match to pre-recorded authentic MP3 voices
+    const t = (text || '').toLowerCase();
+    let matchedKey = null;
+
+    if (t.includes('แดง')) matchedKey = 'mission_red';
+    else if (t.includes('เหลือง')) matchedKey = 'mission_yellow';
+    else if (t.includes('ฟ้า')) matchedKey = 'mission_blue';
+    else if (t.includes('เขียว')) matchedKey = 'mission_green';
+    else if (t.includes('กลม') || t.includes('ทรงกลม')) matchedKey = 'mission_circle';
+    else if (t.includes('สี่เหลี่ยม')) matchedKey = 'mission_square';
+    else if (t.includes('สามเหลี่ยม')) matchedKey = 'mission_triangle';
+    else if (t.includes('ดาว')) matchedKey = 'mission_star';
+    else if (t.includes('กล่อง')) matchedKey = 'mission_sort';
+    else if (t.includes('อิสระ')) matchedKey = 'mission_free';
+    else if (t.includes('กล้อง')) matchedKey = 'camera_on';
+    else if (t.includes('ไมค์')) matchedKey = 'mic_on';
+    else if (t.includes('ยอดเยี่ยม') || t.includes('ชนะ') || t.includes('ผ่าน')) matchedKey = 'praise_win';
+    else if (t.includes('เก่ง')) matchedKey = 'praise_good';
+
+    if (matchedKey) {
+      this.playVoice(matchedKey, text);
+      return;
+    }
+
+    // Fallback to Web Speech API if text is customized/unknown
+    this.rawSpeakThai(text, cancelPrevious);
+  }
+
+  rawSpeakThai(text, cancelPrevious = true) {
     if (!this.speechEnabled || this.isMuted) return;
 
     if (!this.speechSynthesis) {

@@ -95,7 +95,7 @@ class VisionTracker {
       let sumY = 0;
       let motionPixels = 0;
       const prev = this.prevFrameData.data;
-      const threshold = 32;
+      const threshold = 22; // Sensitive & responsive for toddler hands
 
       for (let i = 0; i < data.length; i += 4) {
         // Luminance calculation
@@ -114,7 +114,7 @@ class VisionTracker {
         }
       }
 
-      const minMotionThreshold = (this.downW * this.downH) * 0.015; // 1.5% pixels moving
+      const minMotionThreshold = (this.downW * this.downH) * 0.010; // 1.0% pixels moving
       if (motionPixels > minMotionThreshold) {
         // Mirrored X for natural selfie interaction
         const rawNormX = 1.0 - (sumX / motionPixels) / this.downW;
@@ -126,7 +126,7 @@ class VisionTracker {
         this.motionIntensity = Math.min(1.0, motionPixels / (this.downW * this.downH * 0.2));
         this.lastMotionTime = Date.now();
       } else {
-        if (Date.now() - this.lastMotionTime > 600) {
+        if (Date.now() - this.lastMotionTime > 750) {
           this.hasMotion = false;
         }
       }
@@ -187,28 +187,47 @@ class VisionTracker {
     }
 
     // 2. Draw Magic Star Wand Cursor
-    if (this.hasMotion) {
-      const curX = this.smoothX * screenWidth;
-      const curY = this.smoothY * screenHeight;
+    const curX = this.smoothX * screenWidth;
+    const curY = this.smoothY * screenHeight;
 
+    if (this.hasMotion) {
       // Glow halo
       ctx.save();
-      const glowGrad = ctx.createRadialGradient(curX, curY, 5, curX, curY, 45);
+      const glowGrad = ctx.createRadialGradient(curX, curY, 5, curX, curY, 55);
       glowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
       glowGrad.addColorStop(0.4, 'rgba(250, 204, 21, 0.7)');
       glowGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
-      ctx.arc(curX, curY, 45, 0, Math.PI * 2);
+      ctx.arc(curX, curY, 55, 0, Math.PI * 2);
       ctx.fill();
 
       // Star Wand Tip
       if (window.particleSystem) {
         ctx.fillStyle = '#FFFFFF';
         ctx.shadowColor = '#FACC15';
-        ctx.shadowBlur = 12;
-        window.particleSystem.drawStar(ctx, curX, curY, 5, 22, 10);
+        ctx.shadowBlur = 16;
+        window.particleSystem.drawStar(ctx, curX, curY, 5, 26, 12);
       }
+
+      // Sparkle label
+      ctx.font = 'bold 14px Kanit, Prompt, sans-serif';
+      ctx.fillStyle = '#D97706';
+      ctx.textAlign = 'center';
+      ctx.fillText('คทาดาววิเศษ ✨', curX, curY + 36);
+      ctx.restore();
+    } else {
+      // Gentle hint when camera is active but waiting for hand motion
+      ctx.save();
+      ctx.globalAlpha = 0.55 + Math.sin(Date.now() * 0.005) * 0.25;
+      if (window.particleSystem) {
+        ctx.fillStyle = '#FDE047';
+        window.particleSystem.drawStar(ctx, curX, curY, 5, 18, 8);
+      }
+      ctx.font = 'bold 13px Kanit, Prompt, sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'center';
+      ctx.fillText('โบกมือเลย 👋', curX, curY + 28);
       ctx.restore();
     }
 

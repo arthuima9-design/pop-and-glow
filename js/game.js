@@ -180,7 +180,7 @@ class Game {
       this.setPrompt('จิ้มลูกโป่งเล่นได้เลยจ้า! ✨', '#FF4757');
       this.spawnInitialBalloons(7);
       if (window.soundCtrl) {
-        window.soundCtrl.speakThai('ภารกิจตอนนี้: ลานเล่นอิสระ จิ้มลูกโป่งลูกไหนก็ได้เลยจ้า');
+        window.soundCtrl.playVoice('mission_free', 'ภารกิจตอนนี้: ลานเล่นอิสระ จิ้มลูกโป่งลูกไหนก็ได้เลยจ้า');
       }
     }
   }
@@ -354,7 +354,7 @@ class Game {
     this.setPrompt(promptStr, colorInfo.hex);
 
     if (window.soundCtrl) {
-      window.soundCtrl.speakThai(`ภารกิจตอนนี้: จิ้มลูกโป่ง${colorInfo.nameTh}นะจ๊ะ`);
+      window.soundCtrl.playVoice(`mission_${this.targetColor}`, `ภารกิจตอนนี้: จิ้มลูกโป่ง${colorInfo.nameTh}นะจ๊ะ`);
     }
 
     this.ensureTargetInPlay();
@@ -370,7 +370,7 @@ class Game {
     this.setPrompt(promptStr, '#FACC15');
 
     if (window.soundCtrl) {
-      window.soundCtrl.speakThai(`ภารกิจตอนนี้: แตะลูกโป่งรูป${shapeInfo.nameTh} ยิ้มแฉ่งจ้า`);
+      window.soundCtrl.playVoice(`mission_${this.targetShape}`, `ภารกิจตอนนี้: แตะลูกโป่งรูป${shapeInfo.nameTh} ยิ้มแฉ่งจ้า`);
     }
 
     this.ensureTargetInPlay();
@@ -394,7 +394,7 @@ class Game {
 
     this.setPrompt('ลากหรือแตะลูกโป่งลงกล่องที่ตรงกันนะจ๊ะ! 🎁', '#38BDF8');
     if (window.soundCtrl) {
-      window.soundCtrl.speakThai('ภารกิจตอนนี้: ลากหรือแตะลูกโป่งลงกล่องวิเศษนะจ๊ะ');
+      window.soundCtrl.playVoice('mission_sort', 'ภารกิจตอนนี้: ลากหรือแตะลูกโป่งลงกล่องวิเศษนะจ๊ะ');
     }
 
     this.spawnSortingBalloons(4);
@@ -480,15 +480,15 @@ class Game {
   setupInputs() {
     const handlePointerDown = (e) => {
       e.preventDefault();
-      // Unlock Web Audio context immediately
+      // Unlock Web Audio and speech immediately on first user touch
       if (window.soundCtrl) {
-        window.soundCtrl.initContext();
+        window.soundCtrl.unlockAudio();
       }
 
-      // First user tap unlocks browser speech and speaks current mission
+      // First user tap announces current mission with real voice
       if (!this.hasUserInteracted) {
         this.hasUserInteracted = true;
-        setTimeout(() => this.replayPrompt(), 150);
+        setTimeout(() => this.replayPrompt(), 200);
       }
 
       this.lastInteractTime = Date.now();
@@ -607,23 +607,18 @@ class Game {
 
   replayPrompt(cancelPrevious = true) {
     if (!window.soundCtrl) return;
-    window.soundCtrl.initContext();
+    window.soundCtrl.unlockAudio();
 
-    let missionText = '';
     if (this.currentLevel === this.LEVELS.COLOR_POP) {
       const colorInfo = window.COLOR_DEFS[this.targetColor];
-      missionText = `ภารกิจตอนนี้: จิ้มลูกโป่ง${colorInfo.nameTh}นะจ๊ะ`;
+      window.soundCtrl.playVoice(`mission_${this.targetColor}`, `ภารกิจตอนนี้: จิ้มลูกโป่ง${colorInfo.nameTh}นะจ๊ะ`);
     } else if (this.currentLevel === this.LEVELS.SHAPE_SHIFTER) {
       const shapeInfo = window.SHAPE_DEFS[this.targetShape];
-      missionText = `ภารกิจตอนนี้: แตะลูกโป่งรูป${shapeInfo.nameTh} ยิ้มแฉ่งจ้า`;
+      window.soundCtrl.playVoice(`mission_${this.targetShape}`, `ภารกิจตอนนี้: แตะลูกโป่งรูป${shapeInfo.nameTh} ยิ้มแฉ่งจ้า`);
     } else if (this.currentLevel === this.LEVELS.MATCH_SORT) {
-      missionText = 'ภารกิจตอนนี้: ลากหรือแตะลูกโป่งลงกล่องวิเศษนะจ๊ะ';
+      window.soundCtrl.playVoice('mission_sort', 'ภารกิจตอนนี้: ลากหรือแตะลูกโป่งลงกล่องวิเศษนะจ๊ะ');
     } else if (this.currentLevel === this.LEVELS.FREE_PLAY) {
-      missionText = 'ภารกิจตอนนี้: ลานเล่นอิสระ จิ้มลูกโป่งลูกไหนก็ได้เลยจ้า';
-    }
-
-    if (missionText) {
-      window.soundCtrl.speakThai(missionText, cancelPrevious);
+      window.soundCtrl.playVoice('mission_free', 'ภารกิจตอนนี้: ลานเล่นอิสระ จิ้มลูกโป่งลูกไหนก็ได้เลยจ้า');
     }
   }
 
@@ -664,17 +659,9 @@ class Game {
         this.balloons.splice(idx, 1);
       }
 
-      // Praise Voice
-      if (this.currentLevel === this.LEVELS.COLOR_POP) {
-        const colorInfo = window.COLOR_DEFS[this.targetColor];
-        if (window.soundCtrl) {
-          window.soundCtrl.speakThai(`${colorInfo.nameTh} เก่งมาก!`);
-        }
-      } else if (this.currentLevel === this.LEVELS.SHAPE_SHIFTER) {
-        const shapeInfo = window.SHAPE_DEFS[this.targetShape];
-        if (window.soundCtrl) {
-          window.soundCtrl.speakThai(`${shapeInfo.nameTh} เก่งมากจ้า!`);
-        }
+      // Praise Voice (เก่งมาก, ว้าว ยอดเยี่ยมมาก, สุดยอดไปเลย)
+      if (window.soundCtrl) {
+        window.soundCtrl.playVoiceRandom(['praise_good', 'praise_wow', 'praise_super'], 'เก่งมากเลยจ้า');
       }
 
       // Increment progress & save stars (ปรับแต่งคะแนนได้ตามใจชอบ พร้อมเอฟเฟกต์ตัวเลขลอย)
@@ -825,7 +812,7 @@ class Game {
 
     this.celebrationModal.classList.add('show');
     if (window.soundCtrl) {
-      window.soundCtrl.speakThai('ยอดเยี่ยมที่สุดเลย! หนูเก่งมากๆ เลยนะ!');
+      window.soundCtrl.playVoice('praise_win', 'ยินดีด้วยจ้า ผ่านด่านแล้วคนเก่ง');
     }
   }
 
@@ -907,21 +894,48 @@ class Game {
   setupHUDControls() {
     const btnCameraToggle = document.getElementById('btnCameraToggle');
     const btnMicToggle = document.getElementById('btnMicToggle');
+    const cameraToast = document.getElementById('cameraGuideToast');
+    let toastTimer = null;
+
+    const showCameraToast = () => {
+      if (cameraToast) {
+        cameraToast.classList.remove('opacity-0', '-translate-y-4');
+        cameraToast.classList.add('opacity-100', 'translate-y-0');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          cameraToast.classList.remove('opacity-100', 'translate-y-0');
+          cameraToast.classList.add('opacity-0', '-translate-y-4');
+        }, 5000);
+      }
+    };
+
+    const hideCameraToast = () => {
+      if (cameraToast) {
+        clearTimeout(toastTimer);
+        cameraToast.classList.remove('opacity-100', 'translate-y-0');
+        cameraToast.classList.add('opacity-0', '-translate-y-4');
+      }
+    };
 
     if (btnCameraToggle) {
       btnCameraToggle.addEventListener('click', async () => {
+        if (window.soundCtrl) window.soundCtrl.unlockAudio();
+
         if (window.visionTracker.isActive) {
           window.visionTracker.stop();
           if (this.webcamContainer) this.webcamContainer.style.display = 'none';
+          hideCameraToast();
           btnCameraToggle.classList.remove('border-emerald-400', 'bg-emerald-50');
         } else {
           if (this.webcamContainer) this.webcamContainer.style.display = 'block';
           const ok = await window.visionTracker.start(this.webcamVideo);
           if (ok) {
             btnCameraToggle.classList.add('border-emerald-400', 'bg-emerald-50');
-            if (window.soundCtrl) window.soundCtrl.speakThai('เปิดกล้องตรวจจับการโบกมือแล้วจ้า');
+            showCameraToast();
+            if (window.soundCtrl) window.soundCtrl.playVoice('camera_on', 'เปิดกล้องแล้วจ้า โบกมือหน้ากล้องเพื่อจิ้มลูกโป่งนะ');
           } else {
             if (this.webcamContainer) this.webcamContainer.style.display = 'none';
+            alert('ไม่สามารถเปิดกล้องได้ โปรดอนุญาตการเข้าถึงกล้องในเบราว์เซอร์นะจ๊ะ');
           }
         }
       });
@@ -929,6 +943,8 @@ class Game {
 
     if (btnMicToggle) {
       btnMicToggle.addEventListener('click', async () => {
+        if (window.soundCtrl) window.soundCtrl.unlockAudio();
+
         if (window.micController.isActive) {
           window.micController.stop();
           if (this.micVisualizer) this.micVisualizer.classList.remove('active');
@@ -938,7 +954,7 @@ class Game {
           if (ok) {
             if (this.micVisualizer) this.micVisualizer.classList.add('active');
             btnMicToggle.classList.add('border-sky-400', 'bg-sky-50');
-            if (window.soundCtrl) window.soundCtrl.speakThai('เปิดไมค์ตรวจจับเสียงเป่าแล้วจ้า');
+            if (window.soundCtrl) window.soundCtrl.playVoice('mic_on', 'เปิดไมโครโฟนแล้วจ้า ส่งเสียงหรือเป่าลมให้ลูกโป่งลอยนะ');
           }
         }
       });
@@ -1358,14 +1374,14 @@ class Game {
       this.lastAudioPromptTime = Date.now();
       if (window.soundCtrl) {
         window.soundCtrl.playChime(659.25);
-        if (this.currentLevel === this.LEVELS.COLOR_POP) {
-          const colorInfo = window.COLOR_DEFS[this.targetColor];
-          window.soundCtrl.speakThai(`ภารกิจตอนนี้: จิ้มลูกโป่ง${colorInfo.nameTh}ตรงนี้เลยจ้า`);
+        if (window.visionTracker && window.visionTracker.isActive && !window.visionTracker.hasMotion) {
+          window.soundCtrl.playVoice('hint_wand', 'โบกมือหน้ากล้อง เพื่อใช้คทาดาวจิ้มลูกโป่งนะ');
+        } else if (this.currentLevel === this.LEVELS.COLOR_POP) {
+          window.soundCtrl.playVoice(`hint_${this.targetColor}`, 'ลูกโป่งสีลอยมาแล้ว จิ้มเลย');
         } else if (this.currentLevel === this.LEVELS.SHAPE_SHIFTER) {
-          const shapeInfo = window.SHAPE_DEFS[this.targetShape];
-          window.soundCtrl.speakThai(`ภารกิจตอนนี้: แตะรูป${shapeInfo.nameTh}ตรงนี้เลยจ้าคนเก่ง`);
+          window.soundCtrl.playVoice('hint_shape', 'เจอลูกโป่งที่ต้องการแล้ว จิ้มเลยจ้า');
         } else if (this.currentLevel === this.LEVELS.MATCH_SORT) {
-          window.soundCtrl.speakThai('ภารกิจตอนนี้: พาลูกโป่งลงกล่องวิเศษกันนะจ๊ะ');
+          window.soundCtrl.playVoice('hint_sort', 'ลองลากลูกโป่ง ไปใส่กล่องดูสิจ๊ะ');
         }
       }
     }

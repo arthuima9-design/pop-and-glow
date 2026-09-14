@@ -117,8 +117,17 @@
   </header>
 
   <!-- Camera Picture-in-Picture Floating Window -->
-  <div id="webcamContainer">
+  <div id="webcamContainer" class="shadow-2xl">
+    <div class="absolute top-0 left-0 right-0 bg-emerald-600/90 text-white text-[10px] font-bold text-center py-0.5 z-10 select-none">โบกมือหน้ากล้อง 🪄</div>
     <video id="webcamVideo" autoplay playsinline muted></video>
+  </div>
+
+  <!-- Camera Guide Floating Toast -->
+  <div id="cameraGuideToast" class="fixed top-20 left-1/2 -translate-x-1/2 z-40 bg-emerald-600/95 text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-3 border-2 border-emerald-300 pointer-events-none transition-all duration-300 opacity-0 -translate-y-4 max-w-[90vw]">
+    <span class="text-2xl animate-bounce">🪄</span>
+    <div class="text-xs sm:text-sm font-bold text-center">
+      เปิดกล้องแล้ว! โบกมือหน้ากล้องเพื่อใช้ <span class="text-amber-300 font-black">คทาดาววิเศษ ⭐</span> จิ้มลูกโป่งได้เลย!
+    </div>
   </div>
 
   <!-- Microphone Volume / Blow Visualizer -->
@@ -405,15 +414,15 @@
     }
   </script>
 
-  <!-- Game Modules with Version Cache-Busting (?v=1.4.0) -->
-  <script src="js/audio.js?v=1.4.0"></script>
-  <script src="js/particles.js?v=1.4.0"></script>
-  <script src="js/balloon.js?v=1.4.0"></script>
-  <script src="js/box.js?v=1.4.0"></script>
-  <script src="js/vision.js?v=1.4.0"></script>
-  <script src="js/mic.js?v=1.4.0"></script>
-  <script src="js/save.js?v=1.4.0"></script>
-  <script src="js/game.js?v=1.4.0"></script>
+  <!-- Game Modules with Version Cache-Busting (?v=1.5.0) -->
+  <script src="js/audio.js?v=1.5.0"></script>
+  <script src="js/particles.js?v=1.5.0"></script>
+  <script src="js/balloon.js?v=1.5.0"></script>
+  <script src="js/box.js?v=1.5.0"></script>
+  <script src="js/vision.js?v=1.5.0"></script>
+  <script src="js/mic.js?v=1.5.0"></script>
+  <script src="js/save.js?v=1.5.0"></script>
+  <script src="js/game.js?v=1.5.0"></script>
 
 </body>
 </html>
